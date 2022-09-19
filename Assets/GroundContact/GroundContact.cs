@@ -29,9 +29,10 @@ namespace GContacts
         private Rigidbody m_Rigidbody;
         private Collider[] m_Collide;
         private RaycastHit[] m_Hits;
-
         private GContactResult m_result;
+        private GContactResult m_prev_result;
         public GContactResult Result => m_result;
+        public GContactResult Prev_Result => m_prev_result;
 
         private void Start()
         {
@@ -68,6 +69,7 @@ namespace GContacts
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void OnGround()
         {
+            m_prev_result = m_result;
             InitValue();
             Vector3 playerPos = m_Rigidbody.position + m_Origin;
             Vector3 normal = GetNormal(playerPos);
