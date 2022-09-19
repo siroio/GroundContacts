@@ -430,7 +430,6 @@ GameObject:
   - component: {fileID: 661633771}
   - component: {fileID: 661633770}
   - component: {fileID: 661633773}
-  - component: {fileID: 661633774}
   - component: {fileID: 661633775}
   m_Layer: 0
   m_Name: Player
@@ -526,7 +525,7 @@ MonoBehaviour:
   m_Radius: 0.5
   m_Distance: 0.1
   m_Interaction: 1
-  ContactSize: 10
+  BufferSize: 10
 --- !u!54 &661633771
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -568,23 +567,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f66f212fddc0d1744a326358bf983a09, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &661633774
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 661633764}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2397519325bb00e43a70e325fef45e45, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  radius: 0.5
-  GroundCheckDistance: 0.1
-  checkMask:
-    serializedVersion: 2
-    m_Bits: 8
 --- !u!136 &661633775
 CapsuleCollider:
   m_ObjectHideFlags: 0

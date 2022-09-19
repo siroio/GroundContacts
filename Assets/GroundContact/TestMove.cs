@@ -20,9 +20,7 @@ public class TestMove : MonoBehaviour
         if (Input.GetKey(KeyCode.A)) input.x--;
         if (Input.GetKey(KeyCode.S)) input.z--;
         if (Input.GetKey(KeyCode.D)) input.x++;
-        Vector3 movement = Vector3.ProjectOnPlane(input.normalized * 6.0f, gc.Normal);
-        rb.velocity = movement;
-
-        rb.velocity = Physics.gravity;
+        Vector3 movement = Vector3.ProjectOnPlane(input.normalized, gc.Result.normal);
+        rb.MovePosition(rb.position + movement * 8 * Time.fixedDeltaTime);
     }
 }
