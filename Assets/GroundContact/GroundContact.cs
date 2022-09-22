@@ -22,25 +22,28 @@ namespace GContacts
         [SerializeField] private Vector3 m_Origin;
         [SerializeField, Range(0.0f, 10.0f)] private float m_Radius;
         [SerializeField, Range(0.0f, 1.0f)] private float m_Distance;
+        [SerializeField, Range(0.0f, 5.0f)] private float m_NormalDistance;
         [SerializeField] private QueryTriggerInteraction m_Interaction;
-        [SerializeField, Range(0, 20)] private int BufferSize;
+        [SerializeField, Range(0, 20)] private int m_BufferSize;
 
-        private RaycastHit[] m_normalHit;
+        private RaycastHit[] m_NormalHit;
         private Rigidbody m_Rigidbody;
         private Collider[] m_Collide;
         private RaycastHit[] m_Hits;
-        private GContactResult m_result;
-        private GContactResult m_prev_result;
-        public GContactResult Result => m_result;
-        public GContactResult Prev_Result => m_prev_result;
+        private GContactResult m_Result;
+        private GContactResult m_Prev_Result;
+        public GContactResult Result => m_Result;
+        public GContactResult Prev_Result => m_Prev_Result;
 
         private void Start()
         {
-            m_Collide = new Collider[BufferSize];
-            m_Hits = new RaycastHit[BufferSize];
-            m_normalHit = new RaycastHit[1];
+            m_Collide = new Collider[m_BufferSize];
+            m_Hits = new RaycastHit[m_BufferSize];
+            m_NormalHit = new RaycastHit[1];
+            if (m_BufferSize <= 0) throw new StackOverflowException("Buffer size is less than 0.");
             if (!TryGetComponent(out m_Rigidbody)) throw new NullReferenceException();
         }
+
 #if UNITY_EDITOR
         private void FixedUpdate()
         {
@@ -48,19 +51,25 @@ namespace GContacts
             Profiler.BeginSample("OnGround");
             OnGround();
             Profiler.EndSample();
-            Debug.Log($"{m_result}");
-            Debug.DrawRay(m_Rigidbody.position, m_result.normal * 5, Color.blue, 0.1f);
+            Debug.DrawRay(m_Rigidbody.position, m_Result.normal * 5, Color.blue, 0.1f);
         }
 #endif
 
         private void InitValue()
         {
-            m_result = GContactResult.Zero;
+            m_Result = GContactResult.Zero;
             Array.Clear(m_Collide, 0, m_Collide.Length);
             Array.Clear(m_Hits, 0, m_Hits.Length);
         }
+        
+        /// <summary>
+        /// 値の代入
+        /// </summary>
+        /// <param name="isGround"></param>
+        /// <param name="angle"></param>
+        /// <param name="normal"></param>
         private void SetValue(bool isGround, float angle, Vector3 normal) {
-            m_result = new GContactResult(isGround, angle, normal);
+            m_Result = new GContactResult(isGround, angle, normal);
         }
 
         /// <summary>
@@ -69,7 +78,7 @@ namespace GContacts
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void OnGround()
         {
-            m_prev_result = m_result;
+            m_Prev_Result = m_Result;
             InitValue();
             Vector3 playerPos = m_Rigidbody.position + m_Origin;
             Vector3 normal = GetNormal(playerPos);
@@ -85,12 +94,22 @@ namespace GContacts
             }
         }
 
-
+        /// <summary>
+        /// 地面の法線を取得
+        /// 長すぎるとバグの原因になる可能性
+        /// </summary>
+        /// <param name="StartPos"></param>
+        /// <returns></returns>
         private Vector3 GetNormal(Vector3 StartPos) {
-            Physics.RaycastNonAlloc(StartPos, Vector3.down, m_normalHit, 3, m_GroundLayer, m_Interaction);
-            return m_normalHit[0].normal;
+            Physics.RaycastNonAlloc(StartPos, Vector3.down, m_NormalHit, m_NormalDistance, m_GroundLayer, m_Interaction);
+            return m_NormalHit[0].normal;
         }
 
+        /// <summary>
+        /// 重なってる場合
+        /// </summary>
+        /// <param name="StartPos"></param>
+        /// <param name="Normal"></param>
         private void Overlap(Vector3 StartPos, Vector3 Normal) {
             Physics.OverlapSphereNonAlloc(StartPos, m_Radius, m_Collide, m_GroundLayer, m_Interaction);
 
@@ -102,6 +121,11 @@ namespace GContacts
             }
         }
 
+        /// <summary>
+        /// 重なってない場合
+        /// </summary>
+        /// <param name="StartPos"></param>
+        /// <param name="Normal"></param>
         private void NonOverlap(Vector3 StartPos, Vector3 Normal) {
             Physics.SphereCastNonAlloc(StartPos, m_Radius, Vector3.down, m_Hits, m_Distance, m_GroundLayer, m_Interaction);
 
@@ -113,27 +137,26 @@ namespace GContacts
             }
         }
     }
-}
 
-public struct GContactResult
-{
-    public readonly bool isGround;
-    public readonly float angle;
-    public readonly Vector3 normal;
-    public static GContactResult Zero = new GContactResult();
-
-    public GContactResult(bool isGround = false, float angle = 0.0f, Vector3 normal = default) {
-        this.isGround = isGround;
-        this.angle = angle;
-        this.normal = normal;
-    }
-
-    public override string ToString()
+    public readonly struct GContactResult
     {
-        StringBuilder sb = new StringBuilder();
-        sb.Append("isGround ").Append(isGround).Append(" : ");
-        sb.Append("angle ").Append(angle).Append(" : ");
-        sb.Append("normal ").Append(normal);
-        return sb.ToString();
+        public readonly bool isGround;
+        public readonly float angle;
+        public readonly Vector3 normal;
+        public static GContactResult Zero = new GContactResult();
+
+        public GContactResult(bool isGround = false, float angle = 0.0f, Vector3 normal = default) {
+            this.isGround = isGround;
+            this.angle = angle;
+            this.normal = normal;
+        }
+
+        public override string ToString() {
+            var sb = new StringBuilder();
+            sb.Append("isGround ").Append(isGround).Append(" : ");
+            sb.Append("angle ").Append(angle).Append(" : ");
+            sb.Append("normal ").Append(normal);
+            return sb.ToString();
+        }
     }
 }
