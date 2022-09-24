@@ -2,7 +2,6 @@ using System.Text;
 using System;
 using System.Runtime.CompilerServices;
 using UnityEngine;
-using UnityEngine.Profiling;
 
 namespace GContacts
 {
@@ -48,9 +47,7 @@ namespace GContacts
         private void FixedUpdate()
         {
             if (!m_UseDebugLog) return;
-            Profiler.BeginSample("OnGround");
-            OnGround();
-            Profiler.EndSample();
+            Debug.Log(m_Result.ToString());
             Debug.DrawRay(m_Rigidbody.position, m_Result.normal * 5, Color.blue, 0.1f);
         }
 #endif
@@ -89,14 +86,13 @@ namespace GContacts
                     Overlap(playerPos, normal);
                     break;
                 case false:
-                    NonOverlap(playerPos, normal);
+                    NoOverlap(playerPos, normal);
                     break;
             }
         }
 
         /// <summary>
         /// 地面の法線を取得
-        /// 長すぎるとバグの原因になる可能性
         /// </summary>
         /// <param name="StartPos"></param>
         /// <returns></returns>
@@ -126,7 +122,7 @@ namespace GContacts
         /// </summary>
         /// <param name="StartPos"></param>
         /// <param name="Normal"></param>
-        private void NonOverlap(Vector3 StartPos, Vector3 Normal) {
+        private void NoOverlap(Vector3 StartPos, Vector3 Normal) {
             Physics.SphereCastNonAlloc(StartPos, m_Radius, Vector3.down, m_Hits, m_Distance, m_GroundLayer, m_Interaction);
 
             foreach (var _hit in m_Hits)

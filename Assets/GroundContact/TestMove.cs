@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using GContacts;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 public class TestMove : MonoBehaviour
 {
@@ -15,12 +16,15 @@ public class TestMove : MonoBehaviour
 
     private void FixedUpdate()
     {
+        Profiler.BeginSample("OnGround");
+        gc.OnGround();
+        Profiler.EndSample();
+        
         Vector3 input = Vector3.zero;
         if (Input.GetKey(KeyCode.W)) input.z++;
         if (Input.GetKey(KeyCode.A)) input.x--;
         if (Input.GetKey(KeyCode.S)) input.z--;
         if (Input.GetKey(KeyCode.D)) input.x++;
-        Debug.Log(gc.Result);
         Vector3 movement = Vector3.ProjectOnPlane(input.normalized, gc.Result.normal);
         rb.MovePosition(rb.position + movement * 8 * Time.fixedDeltaTime);
     }

@@ -524,7 +524,7 @@ MonoBehaviour:
   m_Origin: {x: 0, y: 0, z: 0}
   m_Radius: 0.5
   m_Distance: 0.1
-  m_NormalDistance: 0.45
+  m_NormalDistance: 1
   m_Interaction: 1
   m_BufferSize: 10
 --- !u!54 &661633771
