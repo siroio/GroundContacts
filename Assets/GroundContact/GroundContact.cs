@@ -9,16 +9,17 @@ namespace GContacts
     [RequireComponent(typeof(Rigidbody))]
     public class GroundContact : MonoBehaviour
     {
-        #if UNITY_EDITOR
+#if UNITY_EDITOR
         [SerializeField] private bool m_UseDebugLog;
-        #endif
+#endif
 
-        [Header("Ground Settings")] 
+        [Header("Ground Settings")]
         [SerializeField] private LayerMask m_GroundLayer;
         [SerializeField] private string[] m_GroundTag;
 
-        [Header("Collide Setting")] 
+        [Header("Collide Setting")]
         [SerializeField] private Vector3 m_Origin;
+        [SerializeField] private Vector3 m_NormalOrigin;
         [SerializeField, Range(0.0f, 10.0f)] private float m_Radius;
         [SerializeField, Range(0.0f, 1.0f)] private float m_Distance;
         [SerializeField, Range(0.0f, 5.0f)] private float m_NormalDistance;
@@ -34,8 +35,7 @@ namespace GContacts
         public GContactResult Result => m_Result;
         public GContactResult Prev_Result => m_Prev_Result;
 
-        private void Start()
-        {
+        private void Start() {
             m_Collide = new Collider[m_BufferSize];
             m_Hits = new RaycastHit[m_BufferSize];
             m_NormalHit = new RaycastHit[1];
@@ -44,21 +44,19 @@ namespace GContacts
         }
 
 #if UNITY_EDITOR
-        private void FixedUpdate()
-        {
+        private void FixedUpdate() {
             if (!m_UseDebugLog) return;
             Debug.Log(m_Result.ToString());
             Debug.DrawRay(m_Rigidbody.position, m_Result.normal * 5, Color.blue, 0.1f);
         }
 #endif
 
-        private void InitValue()
-        {
+        private void InitValue() {
             m_Result = GContactResult.Zero;
             Array.Clear(m_Collide, 0, m_Collide.Length);
             Array.Clear(m_Hits, 0, m_Hits.Length);
         }
-        
+
         /// <summary>
         /// 値の代入
         /// </summary>
@@ -73,20 +71,21 @@ namespace GContacts
         /// 接地判定
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void OnGround()
-        {
+        public void OnGround() {
             m_Prev_Result = m_Result;
             InitValue();
             Vector3 playerPos = m_Rigidbody.position + m_Origin;
             Vector3 normal = GetNormal(playerPos);
-
-            switch (Physics.CheckSphere(playerPos, m_Radius, m_GroundLayer, m_Interaction))
-            {
-                case true:
-                    Overlap(playerPos, normal);
+            switch (Physics.CheckSphere(playerPos, m_Radius, m_GroundLayer, m_Interaction)) {
+                case true: {
+                        var result = Overlap(playerPos, normal);
+                        SetValue(result.hit, result.angle, result.normal);
+                    }
                     break;
-                case false:
-                    NoOverlap(playerPos, normal);
+                case false: {
+                        var result = NoOverlap(playerPos, normal);
+                        SetValue(result.hit, result.angle, result.normal);
+                    }
                     break;
             }
         }
@@ -97,7 +96,7 @@ namespace GContacts
         /// <param name="StartPos"></param>
         /// <returns></returns>
         private Vector3 GetNormal(Vector3 StartPos) {
-            Physics.RaycastNonAlloc(StartPos, Vector3.down, m_NormalHit, m_NormalDistance, m_GroundLayer, m_Interaction);
+            Physics.RaycastNonAlloc(StartPos + m_NormalOrigin, Vector3.down, m_NormalHit, m_NormalDistance, m_GroundLayer, m_Interaction);
             return m_NormalHit[0].normal;
         }
 
@@ -106,15 +105,16 @@ namespace GContacts
         /// </summary>
         /// <param name="StartPos"></param>
         /// <param name="Normal"></param>
-        private void Overlap(Vector3 StartPos, Vector3 Normal) {
+        private (bool hit, float angle, Vector3 normal) Overlap(Vector3 StartPos, Vector3 Normal) {
             Physics.OverlapSphereNonAlloc(StartPos, m_Radius, m_Collide, m_GroundLayer, m_Interaction);
 
-            foreach (var _collider in m_Collide)
-            {
-                if(_collider == null) continue;
+            foreach (var _collider in m_Collide) {
+                if (_collider == null) continue;
                 foreach (var _tag in m_GroundTag)
-                    SetValue(_collider.transform.CompareTag(_tag), Vector3.Angle(Vector3.up, Normal), Normal);
+                    return (_collider.transform.CompareTag(_tag), Vector3.Angle(Vector3.up, Normal), Normal);
             }
+
+            return (false, 0, Vector3.up);
         }
 
         /// <summary>
@@ -122,15 +122,15 @@ namespace GContacts
         /// </summary>
         /// <param name="StartPos"></param>
         /// <param name="Normal"></param>
-        private void NoOverlap(Vector3 StartPos, Vector3 Normal) {
+        private (bool hit, float angle, Vector3 normal) NoOverlap(Vector3 StartPos, Vector3 Normal) {
             Physics.SphereCastNonAlloc(StartPos, m_Radius, Vector3.down, m_Hits, m_Distance, m_GroundLayer, m_Interaction);
 
-            foreach (var _hit in m_Hits)
-            {
+            foreach (var _hit in m_Hits) {
                 if (_hit.transform == null) continue;
                 foreach (var _tag in m_GroundTag)
-                    SetValue(_hit.transform.CompareTag(_tag), Vector3.Angle(Vector3.up, Normal), Normal);
+                    return (_hit.transform.CompareTag(_tag), Vector3.Angle(Vector3.up, Normal), Normal);
             }
+            return (false, 0, Vector3.up);
         }
     }
 
